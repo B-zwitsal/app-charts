@@ -5,15 +5,17 @@
   <title>Power Usage Chart</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body {
+    html, body {
       margin: 0;
       padding: 0;
       background-color: transparent;
+      height: 100%;
+      width: 100%;
     }
     #chart-container {
       position: relative;
       width: 100vw;
-      height: 100vw; /* square */
+      height: 100vw; /* Makes it square */
     }
     canvas {
       background-color: transparent !important;
@@ -29,7 +31,7 @@
     const ctx = document.getElementById('powerChart').getContext('2d');
 
     const data = {
-      labels: [...Array(24).keys()].map(h => `${h}:00`), // 24 hours
+      labels: [...Array(24).keys()].map(h => `${h}:00`),
       datasets: [
         {
           label: 'Injection',
@@ -50,22 +52,34 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        backgroundColor: 'transparent',
         plugins: {
           legend: {
             labels: {
-              color: '#ffffff' // or change based on your App theme
+              color: '#ffffff', // White labels
+              font: {
+                size: 12
+              }
             }
           }
         },
         scales: {
           x: {
             ticks: {
-              color: '#ffffff'
+              color: '#ffffff',
+              font: { size: 10 }
+            },
+            grid: {
+              color: 'rgba(255,255,255,0.1)' // light grid
             }
           },
           y: {
             ticks: {
-              color: '#ffffff'
+              color: '#ffffff',
+              font: { size: 10 }
+            },
+            grid: {
+              color: 'rgba(255,255,255,0.1)'
             }
           }
         }
