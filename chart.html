@@ -1,21 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Power Usage Chart</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     html, body {
-      margin: 0;
-      padding: 0;
-      background-color: transparent;
-      height: 100%;
-      width: 100%;
+      margin: 0; padding: 0;
+      background-color: #201e2b;
+      height: 100%; width: 100%;
     }
     #chart-container {
       position: relative;
       width: 100vw;
-      height: 100vw; /* Makes it square */
+      height: 50vw;
     }
     canvas {
       background-color: transparent !important;
@@ -28,19 +26,68 @@
   </div>
 
   <script>
+    // Plugin to fill canvas background
+    Chart.register({
+      id: 'custom_canvas_background_color',
+      beforeDraw: (chart) => {
+        const ctx = chart.canvas.getContext('2d');
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-over';
+        ctx.fillStyle = '#201e2b';
+        ctx.fillRect(0, 0, chart.width, chart.height);
+        ctx.restore();
+      }
+    });
+
+    // Plugin for vertical crosshair
+    Chart.register({
+      id: 'crosshair',
+      afterDraw: function(chart) {
+        if (chart.tooltip._active && chart.tooltip._active.length) {
+          const ctx = chart.ctx;
+          const activePoint = chart.tooltip._active[0];
+          const x = activePoint.element.x;
+          const topY = chart.scales.y.top;
+          const bottomY = chart.scales.y.bottom;
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(x, topY);
+          ctx.lineTo(x, bottomY);
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = '#ffffff';
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    });
+
+    // Plugin to fix tooltip vertical position
+    Chart.register({
+      id: 'fixedTooltipPosition',
+      beforeTooltipDraw: function(chart, args) {
+        if (!args.tooltip) return;
+        args.tooltip.y = 20;
+      }
+    });
+
     const ctx = document.getElementById('powerChart').getContext('2d');
 
+    const labels = [...Array(24).keys()].map(h => `${h}:00`);
+    const injectionData = Array(24).fill().map(() => Math.floor(Math.random() * 100));
+    const consumptionData = Array(24).fill().map(() => Math.floor(Math.random() * 100));
+
     const data = {
-      labels: [...Array(24).keys()].map(h => `${h}:00`),
+      labels: labels,
       datasets: [
         {
           label: 'Injection',
-          data: Array(24).fill().map(() => Math.floor(Math.random() * 100)),
+          data: injectionData,
           backgroundColor: '#e39025'
         },
         {
           label: 'Consumption',
-          data: Array(24).fill().map(() => Math.floor(Math.random() * 100)),
+          data: consumptionData,
           backgroundColor: '#7b7e74'
         }
       ]
@@ -52,35 +99,67 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        backgroundColor: 'transparent',
+        interaction: {
+          mode: 'index',
+          intersect: false
+        },
         plugins: {
+          title: {
+            display: true,
+            text: 'Daily Power Usage',
+            color: '#ffffff',
+            font: { size: 80 }
+          },
           legend: {
+            position: 'bottom',
             labels: {
-              color: '#ffffff', // White labels
-              font: {
-                size: 12
+              color: '#ffffff',
+              font: { size: 64 }
+            }
+          },
+          tooltip: {
+            enabled: true,
+            backgroundColor: '#201e2b',
+            displayColors: true,
+            titleFont: { size: 48 },
+            bodyFont: { size: 48 },
+            callbacks: {
+              title: function(tooltipItems) {
+                return tooltipItems[0].label;
+              },
+              label: function(context) {
+                // Only for Injection dataset, combine Injection + Consumption in one line
+                if (context.dataset.label === 'Injection') {
+                  const hourIndex = context.dataIndex;
+                  const injectionVal = context.dataset.data[hourIndex];
+                  const consumptionVal = context.chart.data.datasets[1].data[hourIndex];
+                  return `Injection: ${injectionVal} | Consumption: ${consumptionVal}`;
+                }
+                // Skip Consumption dataset so it doesn't appear separately
+                return null;
+              },
+              labelColor: function(context) {
+                if (context.dataset.label === 'Injection') {
+                  return { backgroundColor: '#e39025', borderColor: '#e39025' };
+                }
+                if (context.dataset.label === 'Consumption') {
+                  return { backgroundColor: '#7b7e74', borderColor: '#7b7e74' };
+                }
+                return {};
               }
             }
           }
         },
         scales: {
           x: {
-            ticks: {
-              color: '#ffffff',
-              font: { size: 10 }
-            },
-            grid: {
-              color: 'rgba(255,255,255,0.1)' // light grid
-            }
+            ticks: { color: '#ffffff' },
+            grid: { color: 'rgba(255,255,255,0.2)', lineWidth: 1 }
           },
           y: {
-            ticks: {
-              color: '#ffffff',
-              font: { size: 10 }
-            },
-            grid: {
-              color: 'rgba(255,255,255,0.1)'
-            }
+            beginAtZero: true,
+            suggestedMax: 100,
+            ticks: { stepSize: 20, color: '#ffffff' },
+            grid: { color: 'rgba(255,255,255,0.4)', lineWidth: 2 }
           }
         }
       }
