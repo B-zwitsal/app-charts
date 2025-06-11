@@ -2,13 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Power Usage Chart</title>
+  <title>Responsive Power Usage Chart</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     html, body {
-      margin: 0; padding: 0;
+      margin: 0;
+      padding: 0;
       background-color: #201e2b;
-      height: 100%; width: 100%;
+      height: 100%;
+      width: 100%;
     }
     #chart-container {
       position: relative;
@@ -26,6 +28,9 @@
   </div>
 
   <script>
+    // Calculate scaling factor based on screen width
+    const scaleFactor = window.innerWidth / 400;  // 400px is our reference design width
+
     // Plugin to fill canvas background
     Chart.register({
       id: 'custom_canvas_background_color',
@@ -67,7 +72,7 @@
       id: 'fixedTooltipPosition',
       beforeTooltipDraw: function(chart, args) {
         if (!args.tooltip) return;
-        args.tooltip.y = 20;
+        args.tooltip.y = 5 * scaleFactor;
       }
     });
 
@@ -108,34 +113,32 @@
             display: true,
             text: 'Daily Power Usage',
             color: '#ffffff',
-            font: { size: 80 }
+            font: { size: 5 * scaleFactor }
           },
           legend: {
             position: 'bottom',
             labels: {
               color: '#ffffff',
-              font: { size: 64 }
+              font: { size: 4 * scaleFactor }
             }
           },
           tooltip: {
             enabled: true,
             backgroundColor: '#201e2b',
             displayColors: true,
-            titleFont: { size: 48 },
-            bodyFont: { size: 48 },
+            titleFont: { size: 3 * scaleFactor },
+            bodyFont: { size: 3 * scaleFactor },
             callbacks: {
               title: function(tooltipItems) {
                 return tooltipItems[0].label;
               },
               label: function(context) {
-                // Only for Injection dataset, combine Injection + Consumption in one line
                 if (context.dataset.label === 'Injection') {
                   const hourIndex = context.dataIndex;
                   const injectionVal = context.dataset.data[hourIndex];
                   const consumptionVal = context.chart.data.datasets[1].data[hourIndex];
                   return `Injection: ${injectionVal} | Consumption: ${consumptionVal}`;
                 }
-                // Skip Consumption dataset so it doesn't appear separately
                 return null;
               },
               labelColor: function(context) {
@@ -152,14 +155,27 @@
         },
         scales: {
           x: {
-            ticks: { color: '#ffffff' },
-            grid: { color: 'rgba(255,255,255,0.2)', lineWidth: 1 }
+            ticks: {
+              color: '#ffffff',
+              font: { size: 2 * scaleFactor }
+            },
+            grid: {
+              color: 'rgba(255,255,255,0.2)',
+              lineWidth: 1
+            }
           },
           y: {
             beginAtZero: true,
             suggestedMax: 100,
-            ticks: { stepSize: 20, color: '#ffffff' },
-            grid: { color: 'rgba(255,255,255,0.4)', lineWidth: 2 }
+            ticks: {
+              stepSize: 20,
+              color: '#ffffff',
+              font: { size: 2 * scaleFactor }
+            },
+            grid: {
+              color: 'rgba(255,255,255,0.4)',
+              lineWidth: 2
+            }
           }
         }
       }
